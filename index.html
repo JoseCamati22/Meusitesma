@@ -1,0 +1,591 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  LayoutDashboard, 
+  BookOpen, 
+  Users, 
+  UserPlus, 
+  UserMinus, 
+  UserCheck, 
+  Briefcase, 
+  DollarSign, 
+  Award, 
+  FileText, 
+  Home,
+  Plus,
+  Trash2,
+  Edit,
+  Download,
+  Menu,
+  X,
+  Search,
+  Camera
+} from 'lucide-react';
+
+// --- Globals & Constants ---
+const COURSES = [
+  "Informática", "Excel Básico ao Avançado", "Electricidade", 
+  "Empreendedorismo", "Design Gráfico", "Desenhador Projectista", 
+  "AUTOCAD", "Programação Web", "Inteligência Artificial para Iniciantes"
+];
+
+const MATRICULA_PRICE = 22500;
+
+// --- Shared Helper Components (Defined outside App to be accessible by all) ---
+
+const SidebarItem = ({ icon: Icon, label, tab, activeTab, setActiveTab, isOpen }) => (
+  <button 
+    onClick={() => setActiveTab(tab)}
+    className={`w-full flex items-center space-x-3 px-4 py-3 transition-colors ${activeTab === tab ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+  >
+    <Icon size={20} />
+    <span className={`${!isOpen && 'hidden'}`}>{label}</span>
+  </button>
+);
+
+const StatCard = ({ title, value, color, icon: Icon }) => (
+  <div className={`bg-white p-6 rounded-xl shadow-sm border-l-4 ${color} flex items-center justify-between`}>
+    <div>
+      <p className="text-sm text-gray-500 font-medium">{title}</p>
+      <p className="text-2xl font-bold text-gray-800">{value}</p>
+    </div>
+    <div className={`p-3 rounded-full bg-opacity-10 ${color.replace('border-', 'bg-')}`}>
+      <Icon className={color.replace('border-', 'text-')} size={24} />
+    </div>
+  </div>
+);
+
+// --- Section Components ---
+
+const HomeSection = ({ courses }) => (
+  <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white shadow-lg">
+      <h1 className="text-3xl font-bold mb-2">Bem-vindo ao MASTERFORM+</h1>
+      <p className="opacity-90 max-w-2xl text-lg">Centro de formação profissional de excelência. Gerencie seus cursos, alunos e finanças em um só lugar.</p>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 className="text-blue-600 font-bold text-lg mb-2">9 Cursos Ativos</h3>
+        <p className="text-gray-600 text-sm">Oferecemos especialização técnica em áreas de alta demanda no mercado.</p>
+      </div>
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 className="text-orange-600 font-bold text-lg mb-2">Preço Fixo</h3>
+        <p className="text-gray-600 text-sm">Matrículas simplificadas no valor de 22.500 kz para qualquer curso.</p>
+      </div>
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 className="text-green-600 font-bold text-lg mb-2">Gestão Ágil</h3>
+        <p className="text-gray-600 text-sm">Acompanhe desistências, conclusões e fluxo de caixa em tempo real.</p>
+      </div>
+    </div>
+
+    <div>
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Nossa Grade de Cursos</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {courses.map((course, i) => (
+          <div key={i} className="bg-white p-4 rounded-lg border border-gray-100 flex items-center space-x-3 hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 bg-blue-50 rounded text-blue-600 flex items-center justify-center font-bold">{i+1}</div>
+            <span className="text-gray-700 font-medium">{course}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const DashboardSection = ({ metrics }) => (
+  <div className="space-y-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <StatCard title="Total Alunos" value={metrics.total} color="border-blue-500" icon={Users} />
+      <StatCard title="Receita Estimada" value={`${metrics.receita.toLocaleString()} Kz`} color="border-green-500" icon={DollarSign} />
+      <StatCard title="Matriculados" value={metrics.matriculados} color="border-blue-300" icon={UserPlus} />
+      <StatCard title="Concluídos" value={metrics.concluidos} color="border-orange-400" icon={UserCheck} />
+    </div>
+    
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 className="text-lg font-bold text-gray-800 mb-4">Distribuição de Alunos</h3>
+        <div className="flex items-end space-x-4 h-48 border-b pb-1">
+          <div className="flex-1 flex flex-col items-center space-y-2">
+            <div className="w-full bg-blue-500 rounded-t transition-all duration-1000" style={{ height: `${metrics.total > 0 ? (metrics.matriculados / metrics.total) * 100 : 0}%` }}></div>
+            <span className="text-[10px] text-gray-500 text-center">Matrículas</span>
+          </div>
+          <div className="flex-1 flex flex-col items-center space-y-2">
+            <div className="w-full bg-green-500 rounded-t transition-all duration-1000" style={{ height: `${metrics.total > 0 ? (metrics.concluidos / metrics.total) * 100 : 0}%` }}></div>
+            <span className="text-[10px] text-gray-500 text-center">Concluídos</span>
+          </div>
+          <div className="flex-1 flex flex-col items-center space-y-2">
+            <div className="w-full bg-red-400 rounded-t transition-all duration-1000" style={{ height: `${metrics.total > 0 ? (metrics.desistidos / metrics.total) * 100 : 0}%` }}></div>
+            <span className="text-[10px] text-gray-500 text-center">Desistências</span>
+          </div>
+        </div>
+      </div>
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 className="text-lg font-bold text-gray-800 mb-4">Últimas Matrículas</h3>
+        <div className="space-y-4">
+          {[1,2,3].map(i => (
+            <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400">UA</div>
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Aluno Exemplo {i}</p>
+                  <p className="text-xs text-gray-500">Informática</p>
+                </div>
+              </div>
+              <span className="text-xs text-gray-400">Há {i*2} horas</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const CoursesSection = ({ courses, students }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {courses.map((course, idx) => {
+      const count = students.filter(s => s.course === course).length;
+      return (
+        <div key={idx} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group hover:border-blue-500 transition-colors">
+          <div className="h-32 bg-gray-100 flex items-center justify-center relative">
+            <div className="absolute top-4 right-4 bg-white px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm border border-blue-100">
+              22.500 kz
+            </div>
+            <BookOpen size={40} className="text-gray-300 group-hover:text-blue-200 transition-colors" />
+          </div>
+          <div className="p-5">
+            <h3 className="font-bold text-gray-800 text-lg mb-2">{course}</h3>
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-sm text-gray-500">{count} Alunos Inscritos</span>
+              <button className="text-blue-600 text-sm font-semibold hover:underline">Detalhes</button>
+            </div>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);
+
+const StudentTable = ({ status, students, updateStatus, addStudent }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', course: COURSES[0] });
+
+  const filtered = students.filter(s => s.status === status);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    addStudent({ ...formData, status: "Matriculado", date: new Date().toISOString().split('T')[0] });
+    setShowModal(false);
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-6 border-b flex justify-between items-center">
+        <h3 className="font-bold text-gray-800">Listagem de Alunos {status}s</h3>
+        {status === "Matriculado" && (
+          <button 
+            onClick={() => setShowModal(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm hover:bg-blue-700"
+          >
+            <Plus size={16} />
+            <span>Novo Aluno</span>
+          </button>
+        )}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-medium">
+            <tr>
+              <th className="px-6 py-4">Nome</th>
+              <th className="px-6 py-4">Curso</th>
+              <th className="px-6 py-4">Matrícula</th>
+              <th className="px-6 py-4">Acções</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {filtered.map((s) => (
+              <tr key={s.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <p className="text-sm font-medium text-gray-800">{s.name}</p>
+                  <p className="text-xs text-gray-500">{s.email}</p>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600">{s.course}</td>
+                <td className="px-6 py-4 text-sm text-gray-600">{s.date}</td>
+                <td className="px-6 py-4">
+                  <div className="flex space-x-2">
+                    {status === "Matriculado" && (
+                      <button onClick={() => updateStatus(s.id, "Concluído")} className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Concluir">
+                        <UserCheck size={18} />
+                      </button>
+                    )}
+                    {status === "Matriculado" && (
+                      <button onClick={() => updateStatus(s.id, "Desistido")} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Desistir">
+                        <UserMinus size={18} />
+                      </button>
+                    )}
+                    <button className="p-1.5 text-blue-600 hover:bg-blue-50 rounded">
+                      <Edit size={18} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {filtered.length === 0 && <div className="p-10 text-center text-gray-400">Nenhum registro encontrado.</div>}
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md p-8">
+            <h3 className="text-xl font-bold mb-6">Cadastrar Aluno</h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Nome Completo</label>
+                <input required type="text" className="w-full border rounded-lg px-3 py-2" onChange={e => setFormData({...formData, name: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Email</label>
+                  <input required type="email" className="w-full border rounded-lg px-3 py-2" onChange={e => setFormData({...formData, email: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Telefone</label>
+                  <input required type="text" className="w-full border rounded-lg px-3 py-2" onChange={e => setFormData({...formData, phone: e.target.value})} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Curso</label>
+                <select className="w-full border rounded-lg px-3 py-2" onChange={e => setFormData({...formData, course: e.target.value})}>
+                  {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Confirmar Matrícula</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const StaffSection = ({ staff, setStaff }) => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div className="flex justify-between items-center mb-6">
+      <h3 className="font-bold text-gray-800">Equipa Administrativa</h3>
+      <button className="bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm">
+        <Plus size={16} />
+        <span>Adicionar Funcionário</span>
+      </button>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {staff.map(member => (
+        <div key={member.id} className="p-4 border rounded-lg flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">
+              {member.name.charAt(0)}
+            </div>
+            <div>
+              <p className="font-bold text-gray-800">{member.name}</p>
+              <div className="flex items-center space-x-2">
+                <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded ${member.role === 'Administrador' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                  {member.role}
+                </span>
+                <span className="text-xs text-gray-500">{member.email}</span>
+              </div>
+            </div>
+          </div>
+          <button className="text-gray-400 hover:text-red-500"><Trash2 size={18} /></button>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const TrainersSection = ({ trainers }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {trainers.map(t => (
+      <div key={t.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+        <div className="w-16 h-16 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center text-blue-600">
+          <Users size={32} />
+        </div>
+        <h4 className="font-bold text-gray-800">{t.name}</h4>
+        <p className="text-xs text-blue-600 font-medium mb-4">Formador Especialista</p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {t.courses.map(c => (
+            <span key={c} className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 italic">#{c}</span>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const FinanceSection = ({ metrics, students }) => (
+  <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+        <p className="text-gray-500 text-sm mb-1">Receita Total Bruta</p>
+        <p className="text-3xl font-black text-green-600">{metrics.receita.toLocaleString()} Kz</p>
+        <p className="text-xs text-gray-400 mt-2">Baseado em matrículas efectivas</p>
+      </div>
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+        <p className="text-gray-500 text-sm mb-1">Preço p/ Matrícula</p>
+        <p className="text-3xl font-black text-blue-600">22.500 Kz</p>
+        <p className="text-xs text-gray-400 mt-2">Valor fixo institucional</p>
+      </div>
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+        <p className="text-gray-500 text-sm mb-1">Pendentes de Cobrança</p>
+        <p className="text-3xl font-black text-orange-400">0 Kz</p>
+        <p className="text-xs text-gray-400 mt-2">Sistema pré-pago</p>
+      </div>
+    </div>
+    
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="p-6 border-b font-bold text-gray-800">Fluxo de Caixa Detalhado</div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-gray-50 text-gray-500 text-xs">
+            <tr>
+              <th className="px-6 py-4">Origem</th>
+              <th className="px-6 py-4">Data</th>
+              <th className="px-6 py-4">Status</th>
+              <th className="px-6 py-4 text-right">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.filter(s => s.status !== "Desistido").map(s => (
+              <tr key={s.id} className="border-b last:border-0 text-sm">
+                <td className="px-6 py-4 font-medium">Matrícula: {s.name}</td>
+                <td className="px-6 py-4 text-gray-500">{s.date}</td>
+                <td className="px-6 py-4"><span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs font-bold">Recebido</span></td>
+                <td className="px-6 py-4 text-right font-bold">22.500,00</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+);
+
+const CertificatesSection = ({ students }) => {
+  const finishers = students.filter(s => s.status === "Concluído");
+  
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {finishers.map(s => (
+          <div key={s.id} className="bg-white border-2 border-dashed border-gray-200 p-6 rounded-xl relative overflow-hidden">
+            <div className="absolute -right-4 -bottom-4 opacity-5 rotate-12">
+              <Award size={120} />
+            </div>
+            <div className="text-center space-y-4">
+              <Award className="mx-auto text-orange-500" size={40} />
+              <h4 className="font-serif text-lg text-gray-800">Certificado de Conclusão</h4>
+              <div className="text-xs text-gray-500">Certificamos que</div>
+              <div className="font-bold text-gray-900 border-b border-gray-200 pb-1 mx-4 uppercase">{s.name}</div>
+              <div className="text-xs text-gray-500">concluiu com êxito o curso de</div>
+              <div className="font-bold text-blue-600">{s.course}</div>
+              <button className="bg-gray-800 text-white w-full py-2 rounded text-xs flex items-center justify-center space-x-2 mt-4 hover:bg-black">
+                <Download size={14} />
+                <span>Descarregar PDF</span>
+              </button>
+            </div>
+          </div>
+        ))}
+        {finishers.length === 0 && (
+          <div className="col-span-full p-20 text-center bg-gray-100 rounded-xl text-gray-400 border-2 border-dashed">
+            Nenhum certificado disponível. Os certificados são gerados após a conclusão do curso.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ReportsSection = ({ metrics }) => (
+  <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-8">
+    <div className="flex justify-between items-start border-b pb-6">
+      <div>
+        <h3 className="text-2xl font-black text-gray-800">Relatório Executivo MASTERFORM+</h3>
+        <p className="text-gray-500">Dados consolidados do centro de formação</p>
+      </div>
+      <div className="text-right text-sm text-gray-400">
+        Gerado em: {new Date().toLocaleDateString('pt-AO')}
+      </div>
+    </div>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="space-y-4">
+        <h4 className="font-bold text-gray-700 border-l-4 border-blue-500 pl-3">Resumo Académico</h4>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm py-1 border-b"><span>Alunos Inscritos:</span> <strong>{metrics.total}</strong></div>
+          <div className="flex justify-between text-sm py-1 border-b"><span>Alunos Matriculados:</span> <strong>{metrics.matriculados}</strong></div>
+          <div className="flex justify-between text-sm py-1 border-b"><span>Alunos Concluídos:</span> <strong>{metrics.concluidos}</strong></div>
+          <div className="flex justify-between text-sm py-1 border-b"><span>Taxa de Desistência:</span> <strong className="text-red-500">{metrics.total > 0 ? ((metrics.desistidos/metrics.total)*100).toFixed(1) : 0}%</strong></div>
+          <div className="flex justify-between text-sm py-1 border-b"><span>Cursos em vigor:</span> <strong>9</strong></div>
+        </div>
+      </div>
+      <div className="space-y-4">
+        <h4 className="font-bold text-gray-700 border-l-4 border-green-500 pl-3">Resumo Financeiro</h4>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm py-1 border-b"><span>Faturação Total:</span> <strong>{metrics.receita.toLocaleString()} Kz</strong></div>
+          <div className="flex justify-between text-sm py-1 border-b"><span>Ticket Médio:</span> <strong>22.500 Kz</strong></div>
+          <div className="flex justify-between text-sm py-1 border-b"><span>Status de Pagamento:</span> <strong className="text-green-600">100% Regularizado</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
+      <button className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold flex items-center justify-center space-x-2 hover:bg-blue-700">
+        <Download size={20} />
+        <span>Exportar para PDF</span>
+      </button>
+      <button className="flex-1 border-2 border-gray-800 text-gray-800 py-3 rounded-lg font-bold flex items-center justify-center space-x-2 hover:bg-gray-800 hover:text-white transition-colors">
+        <FileText size={20} />
+        <span>Exportar para Excel</span>
+      </button>
+    </div>
+  </div>
+);
+
+// --- Main App Component ---
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('Home');
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [logo, setLogo] = useState(null);
+  
+  // State for data
+  const [students, setStudents] = useState([
+    { id: 1, name: "António Manuel", email: "antonio@exemplo.com", phone: "923000000", course: "Programação Web", status: "Matriculado", date: "2023-10-15" },
+    { id: 2, name: "Maria José", email: "maria@exemplo.com", phone: "912000000", course: "Design Gráfico", status: "Concluído", date: "2023-05-10" },
+    { id: 3, name: "João Pedro", email: "joao@exemplo.com", phone: "945000000", course: "Electricidade", status: "Desistido", date: "2023-08-20" },
+  ]);
+
+  const [staff, setStaff] = useState([
+    { id: 1, name: "Carlos Admin", role: "Administrador", email: "admin@masterform.com" },
+    { id: 2, name: "Lúcia Financeira", role: "Financeiro", email: "financeiro@masterform.com" }
+  ]);
+
+  const [trainers] = useState([
+    { id: 1, name: "Eng. Ricardo", courses: ["AUTOCAD", "Desenhador Projectista"] },
+    { id: 2, name: "Dr. Sofia", courses: ["Inteligência Artificial para Iniciantes"] }
+  ]);
+
+  // Calculations
+  const metrics = useMemo(() => {
+    const total = students.length;
+    const matriculados = students.filter(s => s.status === "Matriculado").length;
+    const concluidos = students.filter(s => s.status === "Concluído").length;
+    const desistidos = students.filter(s => s.status === "Desistido").length;
+    const receita = (matriculados + concluidos) * MATRICULA_PRICE;
+    
+    return { total, matriculados, concluidos, desistidos, receita };
+  }, [students]);
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setLogo(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const addStudent = (newStudent) => {
+    setStudents([...students, { ...newStudent, id: Date.now() }]);
+  };
+
+  const updateStudentStatus = (id, newStatus) => {
+    setStudents(students.map(s => s.id === id ? { ...s, status: newStatus } : s));
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+      {/* Sidebar */}
+      <div className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-gray-900 transition-all duration-300 flex flex-col z-20`}>
+        <div className="p-4 border-b border-gray-800 flex flex-col items-center">
+          <div className="relative group mb-2">
+            <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden border-2 border-gray-600">
+              {logo ? (
+                <img src={logo} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <Camera className="text-gray-400" />
+              )}
+            </div>
+            <input type="file" onChange={handleLogoUpload} className="hidden" id="logo-input" />
+            <label htmlFor="logo-input" className="absolute inset-0 cursor-pointer opacity-0 group-hover:opacity-100 bg-black bg-opacity-50 flex items-center justify-center transition-opacity rounded-lg">
+              <Plus size={16} className="text-white" />
+            </label>
+          </div>
+          {isSidebarOpen && (
+            <div className="text-lg font-black tracking-tighter text-center">
+              <span className="text-blue-500">MASTER</span>
+              <span className="text-orange-500">FORM</span>
+              <span className="text-green-500">+</span>
+            </div>
+          )}
+        </div>
+
+        <nav className="flex-1 overflow-y-auto pt-4 scrollbar-hide">
+          <SidebarItem icon={Home} label="Página Inicial" tab="Home" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+          <SidebarItem icon={LayoutDashboard} label="Dashboard" tab="Dashboard" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+          <SidebarItem icon={BookOpen} label="Cursos" tab="Cursos" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+          <SidebarItem icon={Users} label="Formadores" tab="Formadores" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+          <SidebarItem icon={UserPlus} label="Matriculados" tab="Matriculados" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+          <SidebarItem icon={UserMinus} label="Desistidos" tab="Desistidos" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+          <SidebarItem icon={UserCheck} label="Concluídos" tab="Concluídos" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+          <SidebarItem icon={Briefcase} label="Funcionários" tab="Funcionários" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+          <SidebarItem icon={DollarSign} label="Finanças" tab="Finanças" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+          <SidebarItem icon={Award} label="Certificados" tab="Certificados" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+          <SidebarItem icon={FileText} label="Relatórios" tab="Relatórios" activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} />
+        </nav>
+
+        <button 
+          onClick={() => setSidebarOpen(!isSidebarOpen)}
+          className="p-4 text-gray-400 hover:text-white border-t border-gray-800 flex justify-center"
+        >
+          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 md:px-8 z-10">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-700 truncate">{activeTab}</h2>
+          <div className="flex items-center space-x-2 md:space-x-4">
+            <div className="relative hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input type="text" placeholder="Pesquisar..." className="pl-10 pr-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 lg:w-64" />
+            </div>
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs md:text-sm">
+              AD
+            </div>
+          </div>
+        </header>
+
+        {/* Dynamic Content Area */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+          {activeTab === 'Home' && <HomeSection courses={COURSES} />}
+          {activeTab === 'Dashboard' && <DashboardSection metrics={metrics} />}
+          {activeTab === 'Cursos' && <CoursesSection courses={COURSES} students={students} />}
+          {activeTab === 'Matriculados' && <StudentTable status="Matriculado" students={students} updateStatus={updateStudentStatus} addStudent={addStudent} />}
+          {activeTab === 'Desistidos' && <StudentTable status="Desistido" students={students} updateStatus={updateStudentStatus} />}
+          {activeTab === 'Concluídos' && <StudentTable status="Concluído" students={students} updateStatus={updateStudentStatus} />}
+          {activeTab === 'Funcionários' && <StaffSection staff={staff} setStaff={setStaff} />}
+          {activeTab === 'Formadores' && <TrainersSection trainers={trainers} />}
+          {activeTab === 'Finanças' && <FinanceSection metrics={metrics} students={students} />}
+          {activeTab === 'Certificados' && <CertificatesSection students={students} />}
+          {activeTab === 'Relatórios' && <ReportsSection metrics={metrics} />}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default App;
